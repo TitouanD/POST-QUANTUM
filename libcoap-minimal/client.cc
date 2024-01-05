@@ -8,11 +8,38 @@
 #include <cstdio>
 
 #include "common.hh"
+#include "../kyber/ref/api.h"
+#include <stddef.h>
+#include "../kyber/ref/kem.h"
+#include <cbor.h>
+#include "../kyber/ref/randombytes.h"
 
 static int have_response = 0;
 
-int
-main(void) {
+cbor_item_t* client_process(uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES], uint8_t ss[pqcrystals_kyber512_BYTES]) {
+    uint8_t ct[pqcrystals_kyber512_CIPHERTEXTBYTES];
+    uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
+
+    size_t i;
+    for(i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
+        pk[i] = pa[i];
+    }
+
+    //Ici on encode le secret avec la clé publique
+    pqcrystals_kyber512_ref_enc(ct, ss, pk);
+
+    size_t j;
+    for (j=0; j<pqcrystals_kyber512_CIPHERTEXTBYTES; j++) {
+        cbor_array_set(ma, i, cbor_build_uint8(ct[j]));
+    }
+
+    //On renvoit le message encodé
+    return ma;
+}
+
+
+
+int main(void) {
   coap_context_t  *ctx = nullptr;
   coap_session_t *session = nullptr;
   coap_address_t dst;
@@ -25,7 +52,7 @@ main(void) {
   coap_set_log_level(COAP_LOG_WARN);
 
   /* resolve destination address where server should be sent */
-  if (resolve_address("coap.me", "5683", &dst) < 0) {
+  if (resolve_address("localhost", "5683", &dst) < 0) {
     coap_log_crit("failed to resolve address\n");
     goto finish;
   }
@@ -49,8 +76,19 @@ main(void) {
   coap_register_response_handler(ctx, [](auto, auto,
                                          const coap_pdu_t *received,
                                          auto) {
-                                        have_response = 1;
-                                        coap_show_pdu(COAP_LOG_WARN, received);
+                                        have_response += 1;
+
+                                        if (have_response == 1){
+                                            coap_response_t *response;
+                                            uint8_t* pa;
+                                            coap_get_data(received,(int)pqcrystals_kyber512_PUBLICKEYBYTES, *pa)
+
+                                            coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+                                            coap_add_data(response,(int)pqcrystals_kyber512_CIPHERTEXTBYTES,client_process((uint8_t*)pa, (uint8_t*) 20));
+                                            coap_show_pdu(COAP_LOG_WARN, response);
+                                            return response;
+                                        }
+
                                         return COAP_RESPONSE_OK;
                                       });
   /* construct CoAP message */
@@ -65,7 +103,7 @@ main(void) {
 
   /* add a Uri-Path option */
   coap_add_option(pdu, COAP_OPTION_URI_PATH, 5,
-                  reinterpret_cast<const uint8_t *>("hello"));
+                  reinterpret_cast<const uint8_t *>("pa"));
 
   coap_show_pdu(COAP_LOG_WARN, pdu);
   /* and send the PDU */
@@ -74,7 +112,7 @@ main(void) {
     goto finish;
   }
 
-  while (have_response == 0)
+  while (have_response < 2)
     coap_io_process(ctx, COAP_IO_WAIT);
 
   result = EXIT_SUCCESS;

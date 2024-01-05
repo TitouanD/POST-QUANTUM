@@ -16,13 +16,8 @@
 
 
 cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
-    //Ce sont des pointeurs pour des arrays qu'il faudra garder tout le long
-    //uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
-    //uint8_t sk[pqcrystals_kyber512_SECRETKEYBYTES];
-
     cbor_item_t *pa = cbor_new_definite_array(pqcrystals_kyber512_PUBLICKEYBYTES);
 
-    //Ici on génère une clé publique à partir d'une clé privée
     pqcrystals_kyber512_ref_keypair(pk, sk);
     size_t i;
     for (i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
@@ -33,10 +28,31 @@ cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
 }
 
 
+void server_process(uint8_t* sk, cbor_item_t* ma) {
+    uint8_t ss[pqcrystals_kyber512_BYTES];
+    uint8_t ct[pqcrystals_kyber512_CIPHERTEXTBYTES];
+
+    size_t i;
+    for(i=0; i<pqcrystals_kyber512_CIPHERTEXTBYTES; i++) {
+        uint8_t a = cbor_get_uint8(cbor_array_get(ma,i));
+        ct[i] = a;
+    }
+
+    //Ici on décode le secret
+    pqcrystals_kyber512_ref_dec(ss, ct, sk);
+    printf(ss);
+}
 
 
-int
-main(void) {
+
+
+
+uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
+uint8_t sk[pqcrystals_kyber512_SECRETKEYBYTES];
+
+
+int main(void) {
+
   coap_context_t  *ctx = nullptr;
   coap_address_t dst;
   coap_resource_t *resource = nullptr;
@@ -82,10 +98,24 @@ main(void) {
   resource_pa = coap_resource_init(ruri_pa, 0);
   coap_register_handler(resource_pa, COAP_REQUEST_GET,
                         [](auto, auto,const coap_pdu_t *request,auto,coap_pdu_t *response) {
-      coap_show_pdu(COAP_LOG_WARN, request);
-      coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
-      coap_add_data(response,(int)pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa((uint8_t*) 10, (uint8_t*) 20));
-      coap_show_pdu(COAP_LOG_WARN, response);
+
+      coap_pdu_code_t code = coap_pdu_get_code(request);
+
+      if (code = COAP_RESPONSE_CODE(205)){
+          uint8_t* ma;
+          coap_get_data(request,(int)pqcrystals_kyber512_CIPHERTEXTBYTES, *ma)
+          server_process(sk, ma)
+
+          coap_show_pdu(COAP_LOG_WARN, request);
+          coap_pdu_set_code(response, COAP_RESPONSE_OK);
+          coap_show_pdu(COAP_LOG_WARN, response);
+      }else {
+
+          coap_show_pdu(COAP_LOG_WARN, request);
+          coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+          coap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
+          coap_show_pdu(COAP_LOG_WARN, response);
+      }
   });
 
   coap_add_resource(ctx, resource);
