@@ -23,7 +23,7 @@ void randombytes(__attribute__((unused)) uint8_t *r, __attribute__((unused)) siz
   return;
 }
 
-int main(void)
+int main()
 {
   unsigned int i;
   uint8_t pk[CRYPTO_PUBLICKEYBYTES];

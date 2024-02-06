@@ -62,7 +62,7 @@ libpqcrystals_sha2_ref.so: sha256.c sha512.c sha2.h
 	$(CC) -shared -fPIC $(CFLAGS) sha256.c sha512.c -o libpqcrystals_sha2_ref.so
 
 libpqcrystals_kyber512_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
-	$(CC) -shared -fPIC $(CFLAGS) -DKYBER_K=2 $(SOURCES) symmetric-shake.c -o libpqcrystals_kyber512_ref.so
+	$(CC) -shared -fPIC $(CFLAGS) -DKYBER_K=2 $(SOURCES) symmetric-shake.c randombytes.c -o libpqcrystals_kyber512_ref.so
 
 libpqcrystals_kyber768_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
 	$(CC) -shared -fPIC $(CFLAGS) -DKYBER_K=3 $(SOURCES) symmetric-shake.c -o libpqcrystals_kyber768_ref.so

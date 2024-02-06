@@ -1,0 +1,1 @@
+gcc server.cc -L../kyber/ref -o server -lcbor -l coap-3-gnutls -l pqcrystals_sha2_ref -l pqcrystals_aes256ctr_ref -l pqcrystals_kyber512_ref -l pqcrystals_fips202_ref

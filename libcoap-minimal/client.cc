@@ -14,32 +14,41 @@
 #include <cbor.h>
 #include "../kyber/ref/randombytes.h"
 
+#define membersof(x) (sizeof(x)/ sizeof(x[0]))
+
 static int have_response = 0;
 
-cbor_item_t* client_process(uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES], uint8_t ss[pqcrystals_kyber512_BYTES]) {
-    uint8_t ct[pqcrystals_kyber512_CIPHERTEXTBYTES];
-    uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
-
-    size_t i;
-    for(i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
-        pk[i] = pa[i];
-    }
-
-    //Ici on encode le secret avec la clé publique
-    pqcrystals_kyber512_ref_enc(ct, ss, pk);
-
-    size_t j;
-    for (j=0; j<pqcrystals_kyber512_CIPHERTEXTBYTES; j++) {
-        cbor_array_set(ma, i, cbor_build_uint8(ct[j]));
-    }
-
-    //On renvoit le message encodé
-    return ma;
+uint8_t* client_process(cbor_item_t* pa) {
+  uint8_t ss[pqcrystals_kyber512_BYTES];
+  uint8_t ct[pqcrystals_kyber512_CIPHERTEXTBYTES];
+  uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
+  size_t i;
+  cbor_item_t *ma = cbor_new_definite_array(pqcrystals_kyber512_CIPHERTEXTBYTES);
+  /*
+  for(i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
+  	uint8_t a = cbor_get_uint8(cbor_array_get(pa,i));
+  	pk[i] = a;
+  }
+  */
+  
+  //Ici on encode le secret avec la clé publique
+  pqcrystals_kyber512_ref_enc(ct, ss, pk);
+  
+  size_t j;
+  /*
+  for (j=0; j<pqcrystals_kyber512_CIPHERTEXTBYTES; j++) {
+  	cbor_array_set(ma, i, cbor_build_uint8(ct[j]));
+  }
+  */
+  
+  //On renvoit le message encodé
+  return ct;
 }
 
 
 
 int main(void) {
+  printf("a");
   coap_context_t  *ctx = nullptr;
   coap_session_t *session = nullptr;
   coap_address_t dst;
@@ -77,19 +86,25 @@ int main(void) {
                                          const coap_pdu_t *received,
                                          auto) {
                                         have_response += 1;
-
+					coap_pdu_t *response;
                                         if (have_response == 1){
-                                            coap_response_t *response;
                                             uint8_t* pa;
-                                            coap_get_data(received,(int)pqcrystals_kyber512_PUBLICKEYBYTES, *pa)
+                                            coap_get_data(received,(int)pqcrystals_kyber512_PUBLICKEYBYTES, *pa);
 
                                             coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
-                                            coap_add_data(response,(int)pqcrystals_kyber512_CIPHERTEXTBYTES,client_process((uint8_t*)pa, (uint8_t*) 20));
+                                            uint8_t a = membersof(pa);
+                                            cbor_item_t *pa_cbor = cbor_new_definite_array(a);
+                                            /*
+                                            for (int i =0; i<a; i++) {
+                                            	cbor_array_set(pa_cbor, i, cbor_build_uint8(pa[i]));
+                                            }
+                                            */
+                                            coap_add_data(response,(int)pqcrystals_kyber512_CIPHERTEXTBYTES,client_process(pa_cbor));
                                             coap_show_pdu(COAP_LOG_WARN, response);
                                             return response;
                                         }
 
-                                        return COAP_RESPONSE_OK;
+                                        return response;
                                       });
   /* construct CoAP message */
   pdu = coap_pdu_init(COAP_MESSAGE_CON,
