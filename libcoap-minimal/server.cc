@@ -2,23 +2,27 @@
  *
  * Copyright (C) 2018-2023 Olaf Bergmann <bergmann@tzi.org>
  */
-
+#include "common.hh"
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
-#include "./common.hh"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <coap3/coap.h>
 
 #include <stddef.h>
 #include <cbor.h>
+
 #define membersof(x) (sizeof(x)/ sizeof(x[0]))
+
+
 
 extern "C" {
 	#include "../kyber/ref/api.h"
 	#include "../kyber/ref/randombytes.h"
 }
 
-int resolve_address(const char *host, const char *service, coap_address_t *dst);
 
 cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
     cbor_item_t *pa = cbor_new_definite_array(pqcrystals_kyber512_PUBLICKEYBYTES);
@@ -118,4 +122,43 @@ int main(void) {
   coap_cleanup();
   
   return result;
+}
+
+
+
+
+int
+resolve_address(const char *host, const char *service, coap_address_t *dst) {
+
+  struct addrinfo *res, *ainfo;
+  struct addrinfo hints;
+  int error, len=-1;
+
+  memset(&hints, 0, sizeof(hints));
+  memset(dst, 0, sizeof(*dst));
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_family = AF_UNSPEC;
+
+  error = getaddrinfo(host, service, &hints, &res);
+
+  if (error != 0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
+    return error;
+  }
+
+  for (ainfo = res; ainfo != NULL; ainfo = ainfo->ai_next) {
+    switch (ainfo->ai_family) {
+    case AF_INET6:
+    case AF_INET:
+      len = dst->size = ainfo->ai_addrlen;
+      memcpy(&dst->addr.sin6, ainfo->ai_addr, dst->size);
+      goto finish;
+    default:
+      ;
+    }
+  }
+
+ finish:
+  freeaddrinfo(res);
+  return len;
 }
