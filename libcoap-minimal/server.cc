@@ -3,21 +3,56 @@
  * Copyright (C) 2018-2023 Olaf Bergmann <bergmann@tzi.org>
  */
 
-#include <cstring>
 #include <cstdlib>
-#include <cstdio>
-#include "common.hh"
-
 #include <coap3/coap.h>
-
-#include <stddef.h>
 #include <cbor.h>
+#include <sys/types.h>
+#include <cstdio>
+#include <sys/socket.h>
+#include <netdb.h>
 #define membersof(x) (sizeof(x)/ sizeof(x[0]))
 
 extern "C" {
 	#include "../kyber/ref/api.h"
 	#include "../kyber/ref/randombytes.h"
 }
+
+int resolve_address(const char *host, const char *service, coap_address_t *dst) {
+
+    struct addrinfo *res, *ainfo;
+    struct addrinfo hints;
+    int error, len=-1;
+
+    memset(&hints, 0, sizeof(hints));
+    memset(dst, 0, sizeof(*dst));
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_family = AF_UNSPEC;
+
+    error = getaddrinfo(host, service, &hints, &res);
+
+    if (error != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
+        return error;
+    }
+
+    for (ainfo = res; ainfo != NULL; ainfo = ainfo->ai_next) {
+        switch (ainfo->ai_family) {
+            case AF_INET6:
+            case AF_INET:
+                len = dst->size = ainfo->ai_addrlen;
+                memcpy(&dst->addr.sin6, ainfo->ai_addr, dst->size);
+                goto finish;
+            default:
+                ;
+        }
+    }
+
+    finish:
+    freeaddrinfo(res);
+    return len;
+}
+
+
 
 void server_process(uint8_t* sk, const uint8_t** ma) {
     
@@ -44,10 +79,21 @@ void server_process(uint8_t* sk, const uint8_t** ma) {
 uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
 uint8_t sk[pqcrystals_kyber512_SECRETKEYBYTES];
 
+
+cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
+    cbor_item_t *pa = cbor_new_definite_array(pqcrystals_kyber512_PUBLICKEYBYTES);
+    pqcrystals_kyber512_ref_keypair(pk, sk);
+    size_t i;
+    for (i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
+        cbor_array_set(pa, i, cbor_build_uint8(pk[i]));
+    }
+    return pa;
+}
+
+
 int main(void) {
   coap_context_t  *ctx = nullptr;
   coap_address_t dst;
-  coap_resource_t *resource = nullptr;
   coap_resource_t *resource_pa = nullptr;
   coap_endpoint_t *endpoint = nullptr;
 
