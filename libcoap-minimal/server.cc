@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
-
+#include "./common.hh"
 #include <coap3/coap.h>
 
 #include <stddef.h>
