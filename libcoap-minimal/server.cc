@@ -111,7 +111,7 @@ int main(void) {
       }
   });
 
-  coap_add_resource(ctx, resource);
+  //coap_add_resource(ctx, resource);
 
   while (true) { coap_io_process(ctx, COAP_IO_WAIT); }
 
