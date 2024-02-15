@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include "common.hh"
 
 #include <coap3/coap.h>
 
@@ -16,20 +17,6 @@
 extern "C" {
 	#include "../kyber/ref/api.h"
 	#include "../kyber/ref/randombytes.h"
-}
-
-int resolve_address(const char *host, const char *service, coap_address_t *dst);
-
-cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
-    cbor_item_t *pa = cbor_new_definite_array(pqcrystals_kyber512_PUBLICKEYBYTES);
-
-    pqcrystals_kyber512_ref_keypair(pk, sk);
-    size_t i;
-    for (i=0; i<pqcrystals_kyber512_PUBLICKEYBYTES; i++) {
-        cbor_array_set(pa, i, cbor_build_uint8(pk[i]));
-    }
-
-    return pa;
 }
 
 void server_process(uint8_t* sk, const uint8_t** ma) {
@@ -107,7 +94,7 @@ int main(void) {
       }
   });
 
-  coap_add_resource(ctx, resource);
+  coap_add_resource(ctx, resource_pa);
 
   while (true) { coap_io_process(ctx, COAP_IO_WAIT); }
 
