@@ -78,7 +78,6 @@ int main(void) {
     printf("Starting ... \n");
     coap_set_log_level(COAP_LOG_WARN);
     coap_context_t *ctx = nullptr;
-
     coap_address_t dst;
     coap_pdu_t *pdu = nullptr;
     int result = EXIT_FAILURE;
@@ -108,13 +107,11 @@ int main(void) {
                                                   auto) -> coap_response_t {
         have_response += 1;
         coap_pdu_t *response = nullptr;
-
+        size_t len;
         if (have_response == 1) {
-            uint8_t *pa;
+            uint8_t pa[4];
             printf("testa\n");
-            coap_delete_pdu(received);
-            printf("testb\n");
-            coap_get_data(received, (size_t *) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t **) &pa);
+            coap_get_data(received, &len, (const uint8_t **) &pa);
             printf("testc\n");
             uint8_t a = membersof(pa);
             cbor_item_t *pa_cbor = cbor_new_definite_array(a);

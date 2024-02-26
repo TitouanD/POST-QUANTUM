@@ -138,7 +138,12 @@ int main(void) {
           printf("else\n");
           coap_show_pdu(COAP_LOG_WARN, request);
           coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
-          coap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
+          uint8_t test[4];
+          test[0] = 0;
+          test[1] = 1;
+          test[2] = 2;
+          test[3] = 3;
+          //coap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
           coap_show_pdu(COAP_LOG_WARN, response);
       }
   });
