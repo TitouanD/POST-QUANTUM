@@ -109,7 +109,7 @@ int main(void) {
         coap_pdu_t *response = nullptr;
         size_t len;
         if (have_response == 1) {
-            uint8_t pa[4];
+            uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES];
             printf("testa\n");
             coap_get_data(received, &len, (const uint8_t **) &pa);
             printf("testc\n");

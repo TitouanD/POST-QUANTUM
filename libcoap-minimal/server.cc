@@ -143,7 +143,7 @@ int main(void) {
           test[1] = 1;
           test[2] = 2;
           test[3] = 3;
-          //coap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
+          scoap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
           coap_show_pdu(COAP_LOG_WARN, response);
       }
   });
