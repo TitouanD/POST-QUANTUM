@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include "common.hh"
+#include <coap3/coap.h>
 #include <stddef.h>
 #include <cbor.h>
 
@@ -15,13 +15,6 @@ extern "C" {
 }
 
 #define membersof(x) (sizeof(x)/ sizeof(x[0]))
-
-#define membersof(x) (sizeof(x) / sizeof(x[0]))
-
-extern "C" {
-    #include "../kyber/ref/api.h"
-    #include "../kyber/ref/randombytes.h"
-}
 
 static int have_response = 0;
 
@@ -77,7 +70,7 @@ coap_session_t *session = nullptr;
 
 int main(void) {
     coap_context_t *ctx = nullptr;
-
+    coap_opt_iterator_t opt_iter;
     coap_address_t dst;
     coap_pdu_t *pdu = nullptr;
     int result = EXIT_FAILURE;
@@ -109,7 +102,7 @@ int main(void) {
         coap_pdu_t *response = nullptr;
 
         if (have_response == 1) {
-            uint8_t *pa;
+            uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES];
             coap_get_data(received, (size_t *) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t **) &pa);
             uint8_t a = membersof(pa);
             cbor_item_t *pa_cbor = cbor_new_definite_array(a);
@@ -159,38 +152,3 @@ int main(void) {
     return result;
 }
 
-int
-resolve_address(const char *host, const char *service, coap_address_t *dst) {
-
-  struct addrinfo *res, *ainfo;
-  struct addrinfo hints;
-  int error, len=-1;
-
-  memset(&hints, 0, sizeof(hints));
-  memset(dst, 0, sizeof(*dst));
-  hints.ai_socktype = SOCK_DGRAM;
-  hints.ai_family = AF_UNSPEC;
-
-  error = getaddrinfo(host, service, &hints, &res);
-
-  if (error != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
-    return error;
-  }
-
-  for (ainfo = res; ainfo != NULL; ainfo = ainfo->ai_next) {
-    switch (ainfo->ai_family) {
-    case AF_INET6:
-    case AF_INET:
-      len = dst->size = ainfo->ai_addrlen;
-      memcpy(&dst->addr.sin6, ainfo->ai_addr, dst->size);
-      goto finish;
-    default:
-      ;
-    }
-  }
-
- finish:
-  freeaddrinfo(res);
-  return len;
-}
