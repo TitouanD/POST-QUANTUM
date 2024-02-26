@@ -112,8 +112,10 @@ int main(void) {
         if (have_response == 1) {
             uint8_t *pa;
             printf("testa\n");
-            coap_get_data(received, (size_t *) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t **) &pa);
+            coap_delete_pdu(received);
             printf("testb\n");
+            coap_get_data(received, (size_t *) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t **) &pa);
+            printf("testc\n");
             uint8_t a = membersof(pa);
             cbor_item_t *pa_cbor = cbor_new_definite_array(a);
             uint8_t *result = client_process(pa_cbor);
