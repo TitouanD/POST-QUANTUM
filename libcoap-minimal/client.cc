@@ -16,6 +16,12 @@ extern "C" {
 
 #define membersof(x) (sizeof(x)/ sizeof(x[0]))
 
+
+extern "C" {
+    #include "../kyber/ref/api.h"
+    #include "../kyber/ref/randombytes.h"
+}
+
 static int have_response = 0;
 
 int resolve_address(const char *host, const char *service, coap_address_t *dst) {
@@ -69,8 +75,10 @@ uint8_t *client_process(cbor_item_t *pa) {
 coap_session_t *session = nullptr;
 
 int main(void) {
+    printf("Starting ... \n");
+    coap_set_log_level(COAP_LOG_WARN);
     coap_context_t *ctx = nullptr;
-    coap_opt_iterator_t opt_iter;
+
     coap_address_t dst;
     coap_pdu_t *pdu = nullptr;
     int result = EXIT_FAILURE;
@@ -102,72 +110,10 @@ int main(void) {
         coap_pdu_t *response = nullptr;
 
         if (have_response == 1) {
-            uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES];
+            uint8_t *pa;
+            printf("testa\n");
             coap_get_data(received, (size_t *) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t **) &pa);
-            /* Got some data, check if block option is set. Behavior is undefined if
-    * both, Block1 and Block2 are present. */
-            block_opt = get_block(received, &opt_iter);
-            if (!block_opt) {
-              /* There is no block option set, just read the data and we are done. */
-              if (coap_get_data(received, &len, &databuf))
-        	append_to_output(databuf, len);
-            } else {
-              unsigned short blktype = opt_iter.type;
-        
-              /* TODO: check if we are looking at the correct block number */
-              if (coap_get_data(received, &len, &databuf))
-        	append_to_output(databuf, len);
-
-              if (COAP_OPT_BLOCK_MORE(block_opt)) {
-	        /* more bit is set */
-        	debug("found the M bit, block size is %u, block nr. %u\n",
-	              COAP_OPT_BLOCK_SZX(block_opt), COAP_OPT_BLOCK_NUM(block_opt));
-
-	        /* create pdu with request for next block */
-	        pdu = coap_new_request(ctx, method, NULL); /* first, create bare PDU w/o any option  */
-	        if ( pdu ) {
-	          /* add URI components from optlist */
-	  for (option = optlist; option; option = option->next ) {
-	    switch (COAP_OPTION_KEY(*(coap_option *)option->data)) {
-	    case COAP_OPTION_URI_HOST :
-	    case COAP_OPTION_URI_PORT :
-	    case COAP_OPTION_URI_PATH :
-	    case COAP_OPTION_URI_QUERY :
-	      coap_add_option ( pdu, COAP_OPTION_KEY(*(coap_option *)option->data),
-				COAP_OPTION_LENGTH(*(coap_option *)option->data),
-				COAP_OPTION_DATA(*(coap_option *)option->data) );
-	      break;
-	    default:
-	      ;			/* skip other options */
-	    }
-	  }
-
-	  /* finally add updated block option from response, clear M bit */
-	  /* blocknr = (blocknr & 0xfffffff7) + 0x10; */
-	  debug("query block %d\n", (COAP_OPT_BLOCK_NUM(block_opt) + 1));
-	  coap_add_option(pdu, blktype, coap_encode_var_bytes(buf, 
-	      ((COAP_OPT_BLOCK_NUM(block_opt) + 1) << 4) | 
-              COAP_OPT_BLOCK_SZX(block_opt)), buf);
-
-	  if (received->hdr->type == COAP_MESSAGE_CON)
-	    tid = coap_send_confirmed(ctx, remote, pdu);
-	  else 
-	    tid = coap_send(ctx, remote, pdu);
-
-	  if (tid == COAP_INVALID_TID) {
-	    debug("message_handler: error sending new request");
-            coap_delete_pdu(pdu);
-	  } else {
-	    set_timeout(&max_wait, wait_seconds);
-            if (received->hdr->type != COAP_MESSAGE_CON)
-              coap_delete_pdu(pdu);
-          }
-
-	  return;
-	}
-      }
-    }
-  }
+            printf("testb\n");
             uint8_t a = membersof(pa);
             cbor_item_t *pa_cbor = cbor_new_definite_array(a);
             uint8_t *result = client_process(pa_cbor);

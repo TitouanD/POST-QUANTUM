@@ -94,11 +94,11 @@ cbor_item_t* init_pa(uint8_t* pk, uint8_t* sk) {
 
 
 int main(void) {
+  printf("Starting ... \n");
   coap_context_t  *ctx = nullptr;
   coap_address_t dst;
   coap_resource_t *resource_pa = nullptr;
   coap_endpoint_t *endpoint = nullptr;
-  printf("Starting ... \n");
   int result = EXIT_FAILURE;;
   //coap_str_const_t *ruri = coap_make_str_const("hello");
   coap_str_const_t *ruri_pa = coap_make_str_const("pa");
