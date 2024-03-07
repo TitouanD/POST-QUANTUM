@@ -66,7 +66,10 @@ uint8_t *client_process(cbor_item_t *pa) {
     cbor_item_t *ma = cbor_new_definite_array(pqcrystals_kyber512_CIPHERTEXTBYTES);
 
     pqcrystals_kyber512_ref_enc(ct, ss, pk);
-
+    int loop;
+    for(loop = 0; loop < pqcrystals_kyber512_BYTES; loop++)
+      printf("%d \n", ss[loop]);
+    
     size_t j;
 
     return ct;
@@ -76,13 +79,14 @@ coap_session_t *session = nullptr;
 
 int main(void) {
     printf("Starting ... \n");
-    coap_set_log_level(COAP_LOG_WARN);
+    
     coap_context_t *ctx = nullptr;
     coap_address_t dst;
     coap_pdu_t *pdu = nullptr;
     int result = EXIT_FAILURE;
 
     coap_startup();
+    
     coap_set_log_level(COAP_LOG_WARN);
 
     if (resolve_address("localhost", "5683", &dst) < 0) {
@@ -99,7 +103,6 @@ int main(void) {
 
     if (!(session = coap_new_client_session(ctx, nullptr, &dst, COAP_PROTO_UDP))) {
         coap_log_emerg("cannot create client session\n");
-        goto finish;
     }
 
     coap_register_response_handler(ctx, [](auto, auto,
@@ -107,6 +110,7 @@ int main(void) {
                                                   auto) -> coap_response_t {
         have_response += 1;
         coap_pdu_t *response = nullptr;
+        printf("response_handler\n");
         size_t len;
         if (have_response == 1) {
             uint8_t pa[pqcrystals_kyber512_PUBLICKEYBYTES];
@@ -141,7 +145,7 @@ int main(void) {
         goto finish;
     }
 
-    coap_add_option(pdu, COAP_OPTION_URI_PATH, 5, reinterpret_cast<const uint8_t *>("pa"));
+    coap_add_option(pdu, COAP_OPTION_URI_PATH, 5, reinterpret_cast<const uint8_t *>("start"));
 
     if (coap_send(session, pdu) == COAP_INVALID_MID) {
         coap_log_err("cannot send CoAP pdu\n");
