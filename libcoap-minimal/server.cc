@@ -86,7 +86,9 @@ void server_process(uint8_t* sk, const uint8_t** ma) {
     printf("Après for cr\n");
     //Ici on décode le secret
     pqcrystals_kyber512_ref_dec(ss, ct, sk);
-    
+    int loop;
+    for(loop = 0; loop < pqcrystals_kyber512_BYTES; loop++)
+      printf("%d \n", ss[loop]);
 }
 uint8_t pk[pqcrystals_kyber512_PUBLICKEYBYTES];
 uint8_t sk[pqcrystals_kyber512_SECRETKEYBYTES];
@@ -162,7 +164,7 @@ int main(void) {
   printf("Add ressource incomming ... \n");
   coap_add_resource(ctx, resource_pa);
   printf("Ressource added ... \n");
-  while (have_response<1) { coap_io_process(ctx, COAP_IO_WAIT); }
+  while (have_response<2) { coap_io_process(ctx, COAP_IO_WAIT); }
 
   result = EXIT_SUCCESS;
  finish:
