@@ -101,7 +101,7 @@ int main(void) {
   coap_endpoint_t *endpoint = nullptr;
   int result = EXIT_FAILURE;;
   //coap_str_const_t *ruri = coap_make_str_const("hello");
-  coap_str_const_t *ruri_pa = coap_make_str_const("pa");
+  coap_str_const_t *ruri_pa = coap_make_str_const("hello");
 
     coap_startup();
 
@@ -121,8 +121,9 @@ int main(void) {
   coap_register_handler(resource_pa, COAP_REQUEST_GET,
                         [](auto, auto,const coap_pdu_t *request,auto,coap_pdu_t *response) {
 
-      coap_pdu_code_t code = coap_pdu_get_code(request);
       printf("request\n");
+      coap_pdu_code_t code = coap_pdu_get_code(request);
+
       if (code = COAP_RESPONSE_CODE_VALID){
           printf("if\n");
           const uint8_t** ma;
@@ -143,7 +144,7 @@ int main(void) {
           test[1] = 1;
           test[2] = 2;
           test[3] = 3;
-          scoap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
+          coap_add_data(response, (int) pqcrystals_kyber512_PUBLICKEYBYTES, (const uint8_t *) init_pa(pk, sk));
           coap_show_pdu(COAP_LOG_WARN, response);
       }
   });

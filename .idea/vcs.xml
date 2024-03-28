@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cbor/libcbor" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/kyber" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libcoap" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libcoap-minimal" vcs="Git" />

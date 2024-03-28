@@ -128,12 +128,6 @@ int main(void) {
 
 
 
-
-
-
-
-
-
     pdu = coap_pdu_init(COAP_MESSAGE_CON, COAP_REQUEST_CODE_GET, coap_new_message_id(session), coap_session_max_pdu_size(session));
 
     if (!pdu) {
@@ -141,7 +135,7 @@ int main(void) {
         goto finish;
     }
 
-    coap_add_option(pdu, COAP_OPTION_URI_PATH, 5, reinterpret_cast<const uint8_t *>("pa"));
+    coap_add_option(pdu, COAP_OPTION_URI_PATH, 5, reinterpret_cast<const uint8_t *>("hello"));
 
     if (coap_send(session, pdu) == COAP_INVALID_MID) {
         coap_log_err("cannot send CoAP pdu\n");
